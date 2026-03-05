@@ -1,0 +1,31 @@
+---
+- name: install k3s
+  hosts: all
+  remote_user: ubuntu
+  become: yes
+
+  tasks:
+
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install curl
+      apt:
+        name: curl
+        state: present
+
+    - name: Install k3s
+      shell: curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644
+
+    - name: Set KUBECONFIG for ubuntu user
+      lineinfile:
+        path: /home/ubuntu/.bashrc
+        line: 'export KUBECONFIG=/etc/rancher/k3s/k3s.yaml'
+        create: yes
+
+    - name: Ensure k3s service running
+      systemd:
+        name: k3s
+        state: started
+        enabled: yes
