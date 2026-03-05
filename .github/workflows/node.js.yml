@@ -65,7 +65,7 @@ jobs:
       
       - name: Run Ansible Playbook
         run: |
-          ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook ./ansible/playbook.yml \
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook ./ansible/playbook.yml \
           -i "${{ needs.terraform-apply.outputs.PUBLIC_IP }}," \
           --user ubuntu \
           --private-key test.pem
