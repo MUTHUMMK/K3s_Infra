@@ -13,9 +13,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install unzip
-        run: sudo apt-get update && sudo apt-get install -y unzip
-
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
@@ -25,25 +22,16 @@ jobs:
 
       - name: Select Terraform Workspace & Set Environment
         run: |
-         BRANCH="${GITHUB_REF##*/}"
-         case "$BRANCH" in 
-         main)
-         WORKSPACE="dev";; 
-         staging)
-         WORKSPACE="staging";;
-         main1|prod)
-         WORKSPACE="main";;
-         *)
-         echo "Unknown branch: $BRANCH"
-         exit 1
-         ;;
-         esac
+         # Use branch name directly as workspace
+         WORKSPACE="${GITHUB_REF##*/}"
 
          echo "Using Terraform workspace: $WORKSPACE"
-         terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
 
-         # Set environment variable for Terraform
-         export TF_VAR_environment=$WORKSPACE
+         # Select existing workspace or create new one
+         terraform workspace select "$WORKSPACE" || terraform workspace new "$WORKSPACE"
+     
+         # Set Terraform environment variable
+         export TF_VAR_environment="$WORKSPACE"
 
 
 
@@ -52,11 +40,10 @@ jobs:
         run: terraform apply -auto-approve
 
       - name: Get EC2 Public IP
-        id: ec2_ip
         working-directory: ./terraform
         run: |
-          PUBLIC_IP=$(terraform output -raw ec2_public_ip)
-          echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+         PUBLIC_IP=$(terraform output ec2_public_ip | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
+         echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
   ansible-install-k3s:
     name: Install K3s via Ansible
