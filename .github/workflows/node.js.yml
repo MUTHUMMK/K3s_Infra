@@ -58,14 +58,19 @@ jobs:
 
       - name: Install Ansible
         run: sudo apt-get update && sudo apt-get install -y ansible sshpass
-
+      
+      - name: Create SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > test.pem
+          sudo chmod 600 test.pem
+      
       - name: Run Ansible Playbook
         run: |
-          ansible-playbook ./ansible/playbook.yml \
+          ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook ./ansible/playbook.yml \
           -i "${{ env.EC2_PUBLIC_IP }}," \
           --user ubuntu \
-          --private-key ${{ secrets.EC2_SSH_KEY }}
-
+          --private-key test.pem
+      
   build-and-push-docker:
     name: Build & Push Docker Image
     runs-on: self-hosted
