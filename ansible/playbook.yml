@@ -1,0 +1,42 @@
+---
+- name: install k3s
+  hosts: all
+  remote_user: ubuntu
+  become: yes
+  vars:
+    k3s_version: "v1.27.10+k3s1"
+    k8s_local_path: "./k8s"        
+    k8s_remote_path: "~/k3s-project/k8s"
+
+  tasks:
+
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install curl
+      apt:
+        name: curl
+        state: present
+
+    - name: Install k3s
+      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} sh -
+
+    - name: Set KUBECONFIG for ubuntu user
+      lineinfile:
+        path: /home/ubuntu/.bashrc
+        line: 'export KUBECONFIG=/etc/rancher/k3s/k3s.yaml'
+        create: yes
+
+    - name: Ensure k3s service running
+      systemd:
+        name: k3s
+        state: started
+        enabled: yes
+    
+    - name: Copy all manifests from Runner to new EC2
+      copy:
+        src: "{{ item }}"
+        dest: "{{ k8s_remote_path }}/"
+      with_fileglob:
+        - "{{ k8s_local_path }}/*"
