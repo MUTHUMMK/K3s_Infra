@@ -52,7 +52,7 @@ resource "aws_instance" "this" {
   }
 
   provisioner "local-exec" {
-    command = "sleep 20 && ansible-playbook -i ${aws_instance.this.public_ip}, --private-key ${local.private_key_path} ${local.package}" 
+    command = "sleep 20 && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ${aws_instance.this.public_ip}, --private-key ${local.private_key_path} ${local.package}" 
   }
 }
 
