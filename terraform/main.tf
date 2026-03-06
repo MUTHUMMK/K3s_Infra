@@ -28,7 +28,7 @@ module "ec2" {
 
   name           = lookup(var.server_name, terraform.workspace, "DEFAULT")
   ami            = var.ami
-  instance_type  = lookup(var.instance_type, terraform.workspace, "t2.micro")
+  instance_type  = lookup(var.instance_type, terraform.workspace, "t3.medium")
   key_name       = var.key_name
   security_group = module.sg.security_group_id
 }
