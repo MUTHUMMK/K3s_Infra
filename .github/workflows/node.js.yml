@@ -39,13 +39,22 @@ jobs:
       - name: Terraform Apply
         working-directory: ./terraform
         run: terraform apply -auto-approve
+      
+      
+      - name: Create SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > test.pem
+          sudo chmod 600 test.pem
+
 
       - name: Get EC2 Public IP
         id: get_ip
         working-directory: terraform
         run: |
-          IP=$(terraform output -raw ec2_public_ip)
-          echo "ec2_ip=$IP" >> $GITHUB_OUTPUT
+         IP=$(terraform output ec2_public_ip | awk -F'"' '{print $2}')
+         echo "[k3s]" > inventory.ini
+         echo "${{ needs.terraform-apply.outputs.ec2_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=test.pem" >> inventory.ini
+
 
       - name: Debug
         run: echo "Created server IP ${{ steps.get_ip.outputs.ec2_ip }}"
@@ -58,22 +67,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Create SSH Key
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > test.pem
-          sudo chmod 600 test.pem
-      
-      - name: Create Inventory File
-        run: |
-          echo "[k3s]" > inventory
-          echo "${{ needs.terraform-apply.outputs.ec2_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=test.pem" >> inventory
-
       - name: Show Inventory
-        run: cat inventory
+        run: cat inventory.ini
 
       - name: Run Ansible Playbook
         run: |
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory ./ansible/playbook.yml
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.ini ./ansible/playbook.yml
 
 
 

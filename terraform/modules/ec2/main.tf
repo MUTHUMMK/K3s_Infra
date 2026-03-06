@@ -25,7 +25,7 @@ resource "aws_instance" "this" {
 # }
 
 # locals {
-#   private_key_path="/home/ubuntu/k3s-project/k8s/test.pem"
+#   private_key_path="/home/ubuntu/.ssh/test.pem"
 #   package="/home/ubuntu/k3s-project/k8s/ansible/nginx.yml"
 #   ssh_user="ubuntu"
 # }
