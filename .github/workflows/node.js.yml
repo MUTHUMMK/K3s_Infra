@@ -27,6 +27,7 @@ jobs:
           WORKSPACE="${GITHUB_REF##*/}"
           terraform workspace select "$WORKSPACE" || terraform workspace new "$WORKSPACE"
           echo "TF_VAR_environment=$WORKSPACE" >> $GITHUB_ENV
+          export ANSIBLE_HOST_KEY_CHECKING=False
 
       - name: Terraform Apply
         working-directory: ./terraform
