@@ -59,13 +59,22 @@
         owner: ubuntu
         group: ubuntu
         mode: '0755'
-
-    - name: Copy Kubernetes manifests
+    - name: Create remote k8s folder
+      file:
+        path: "{{ k8s_remote_path }}"
+        state: directory
+    
+    - name: Copy manifests
       copy:
-        src: "{{ item }}"
+        src: "{{ k8s_local_path }}/"
         dest: "{{ k8s_remote_path }}/"
-      with_fileglob:
-        - "{{ k8s_local_path }}/*.yml"
+
+    # - name: Copy Kubernetes manifests
+    #   copy:
+    #     src: "{{ item }}"
+    #     dest: "{{ k8s_remote_path }}/"
+    #   with_fileglob:
+    #     - "{{ k8s_local_path }}/*.yml"
 
     - name: Deploy manifests to k3s
       command: kubectl apply -f {{ k8s_remote_path }}/
