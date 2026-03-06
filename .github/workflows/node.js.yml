@@ -33,10 +33,10 @@ jobs:
         run: terraform apply -auto-approve
       
       - name: Get EC2 Public IP
-        working-directory: ./terraform
+        working-directory: terraform
         run: |
-          IP=$(terraform output ec2_public_ip | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
-          echo "EC2_PUBLIC_IP=$IP" >> $GITHUB_ENV
+          PUBLIC_IP=$(terraform output -raw ec2_public_ip | tail -n1 | tr -d '\n')
+          echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
       
       - name: Debug IP
         run: echo "Server IP = $EC2_PUBLIC_IP"
@@ -46,10 +46,10 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > test.pem
           chmod 600 test.pem
       
-      - name: Run Ansible
+      - name: Run Ansible Playbook
         run: |
           ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook ./ansible/playbook.yml \
-          -i "$EC2_PUBLIC_IP," \
+          -i "${{ needs.terraform-apply.outputs.PUBLIC_IP }}," \
           --user ubuntu \
           --private-key test.pem
 
