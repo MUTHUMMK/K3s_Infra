@@ -1,0 +1,80 @@
+---
+- name: install k3s
+  hosts: all
+  remote_user: ubuntu
+  become: yes
+
+  vars:
+    k3s_version: "v1.27.10+k3s1"
+    k8s_local_path: "../k3s"
+    k8s_remote_path: "/home/ubuntu/k3s-project/k8s"
+
+  tasks:
+
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - docker.io
+        state: present
+
+    - name: Start and enable Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Install k3s
+      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} sh -
+
+    - name: Ensure k3s service running
+      systemd:
+        name: k3s
+        state: started
+        enabled: yes
+
+    - name: Set kubeconfig permission
+      command: chmod 644 /etc/rancher/k3s/k3s.yaml
+
+    - name: Set KUBECONFIG for ubuntu user
+      lineinfile:
+        path: /home/ubuntu/.bashrc
+        line: 'export KUBECONFIG=/etc/rancher/k3s/k3s.yaml'
+        create: yes
+
+    - name: Create manifest directory
+      file:
+        path: "{{ k8s_remote_path }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Create remote k8s folder
+      file:
+        path: "{{ k8s_remote_path }}"
+        state: directory
+    
+    - name: Copy manifests
+      copy:
+        src: "{{ k8s_local_path }}/"
+        dest: "{{ k8s_remote_path }}/"
+
+    # - name: Copy Kubernetes manifests
+    #   copy:
+    #     src: "{{ item }}"
+    #     dest: "{{ k8s_remote_path }}/"
+    #   with_fileglob:
+    #     - "{{ k8s_local_path }}/*.yml"
+
+    - name: Deploy manifests to k3s
+      command: kubectl apply -f {{ k8s_remote_path }}/
