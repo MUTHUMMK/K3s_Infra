@@ -6,8 +6,8 @@
 
   vars:
     k3s_version: "v1.27.10+k3s1"
-    k8s_local_path: "./k8s"
-    k8s_remote_path: "/home/ubuntu/k3s-project/k8s"
+    k8s_local_path: "/home/ubuntu/K3S/actions-runner/_work/K3s_Project/K3s_Project/k3s"
+    k8s_remote_path: "/home/ubuntu/k3s-project/k3s"
 
   tasks:
 
