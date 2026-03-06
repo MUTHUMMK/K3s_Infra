@@ -31,23 +31,25 @@ jobs:
       - name: Terraform Apply
         working-directory: ./terraform
         run: terraform apply -auto-approve
+      
       - name: Get EC2 Public IP
         working-directory: ./terraform
         run: |
-          IP=$(terraform output -raw ec2_public_ip | tr -d '\n')
+          IP=$(terraform output ec2_public_ip | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
           echo "EC2_PUBLIC_IP=$IP" >> $GITHUB_ENV
-
+      
       - name: Debug IP
-        run: echo "Server IP is $EC2_PUBLIC_IP"
-
+        run: echo "Server IP = $EC2_PUBLIC_IP"
+      
       - name: Create SSH Key
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > test.pem
           chmod 600 test.pem
-
-      - name: Run Ansible Playbook
+      
+      - name: Run Ansible
         run: |
           ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook ./ansible/playbook.yml \
           -i "$EC2_PUBLIC_IP," \
           --user ubuntu \
           --private-key test.pem
+
